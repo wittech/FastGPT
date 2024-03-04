@@ -147,7 +147,8 @@ async def create_chat_completion(
                 prev_messages[i].role == "user"
                 and prev_messages[i + 1].role == "assistant"
             ):
-                history.append([prev_messages[i].content, prev_messages[i + 1].content])
+                history.append([prev_messages[i].content,
+                               prev_messages[i + 1].content])
 
     if request.stream:
         generate = predict(query, history, request.model)
@@ -174,7 +175,7 @@ async def predict(query: str, history: List[List[str]], model_id: str):
     chunk = ChatCompletionResponse(
         model=model_id, choices=[choice_data], object="chat.completion.chunk"
     )
-    yield "{}".format(chunk.json(exclude_unset=True, ensure_ascii=False))
+    yield "{}".format(chunk.model_dump_json(exclude_unset=True))
 
     current_length = 0
 
@@ -189,9 +190,10 @@ async def predict(query: str, history: List[List[str]], model_id: str):
             index=0, delta=DeltaMessage(content=new_text), finish_reason=None
         )
         chunk = ChatCompletionResponse(
-            model=model_id, choices=[choice_data], object="chat.completion.chunk"
+            model=model_id, choices=[
+                choice_data], object="chat.completion.chunk"
         )
-        yield "{}".format(chunk.json(exclude_unset=True, ensure_ascii=False))
+        yield "{}".format(chunk.model_dump_json(exclude_unset=True))
 
     choice_data = ChatCompletionResponseStreamChoice(
         index=0, delta=DeltaMessage(), finish_reason="stop"
@@ -199,7 +201,7 @@ async def predict(query: str, history: List[List[str]], model_id: str):
     chunk = ChatCompletionResponse(
         model=model_id, choices=[choice_data], object="chat.completion.chunk"
     )
-    yield "{}".format(chunk.json(exclude_unset=True, ensure_ascii=False))
+    yield "{}".format(chunk.model_dump_json(exclude_unset=True))
     yield '[DONE]'
 
 
@@ -212,12 +214,14 @@ async def get_embeddings(
 
     # 如果嵌入向量的维度不为1536，则使用插值法扩展至1536维度
     embeddings = [
-        expand_features(embedding, 1536) if len(embedding) < 1536 else embedding
+        expand_features(embedding, 1536) if len(
+            embedding) < 1536 else embedding
         for embedding in embeddings
     ]
 
     # Min-Max normalization 归一化
-    embeddings = [embedding / np.linalg.norm(embedding) for embedding in embeddings]
+    embeddings = [embedding /
+                  np.linalg.norm(embedding) for embedding in embeddings]
 
     # 将numpy数组转换为列表
     embeddings = [embedding.tolist() for embedding in embeddings]
@@ -242,7 +246,8 @@ async def get_embeddings(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", default="16", type=str, help="Model name")
+    parser.add_argument("--model_name", default="16",
+                        type=str, help="Model name")
     args = parser.parse_args()
 
     model_dict = {
@@ -253,8 +258,10 @@ if __name__ == "__main__":
 
     model_name = model_dict.get(args.model_name, "THUDM/chatglm2-6b")
 
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    model = AutoModel.from_pretrained(model_name, trust_remote_code=True).cuda()
+    tokenizer = AutoTokenizer.from_pretrained(
+        model_name, trust_remote_code=True)
+    model = AutoModel.from_pretrained(
+        model_name, trust_remote_code=True).cuda()
     embeddings_model = SentenceTransformer('moka-ai/m3e-large', device='cpu')
 
     uvicorn.run(app, host='0.0.0.0', port=6006, workers=1)

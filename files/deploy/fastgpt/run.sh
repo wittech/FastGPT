@@ -1,4 +1,9 @@
 #!/bin/bash
+# 创建 mongo 密钥
+openssl rand -base64 756 > ./mongodb.key
+chmod 600 ./mongodb.key
+chown 999:root ./mongodb.key
+
 docker-compose pull
 docker-compose up -d
 

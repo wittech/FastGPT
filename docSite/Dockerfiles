@@ -1,0 +1,113 @@
+FROM privoce/vocechat-server:latest
+ARG RELEASE
+ARG LAUNCHPAD_BUILD_ARCH
+LABEL org.opencontainers.image.ref.name=ubuntu
+LABEL org.opencontainers.image.version=20.04
+ADD file:4b4e122c96445546ef9fba44a4eae6ada6239edecb9eea2c807a83abaebad451 in /
+CMD ["/bin/bash"]
+RUN RUN /bin/sh -c apt-get update \
+    &&     apt-get -y upgrade \
+    &&     apt install -y         wget build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev git         libreadline-dev libffi-dev libsqlite3-dev libbz2-dev liblzma-dev \
+    &&     apt clean \
+    &&     rm -rf /var/lib/apt/lists/* 
+RUN WORKDIR /temp
+RUN RUN /bin/sh -c wget https://www.python.org/ftp/python/3.7.16/Python-3.7.16.tgz \
+    &&     tar -xvf Python-3.7.16.tgz 
+RUN RUN /bin/sh -c cd Python-3.7.16 \
+    &&     ./configure --enable-optimizations \
+    &&     make \
+    &&     make install 
+RUN WORKDIR /workspace
+RUN RUN /bin/sh -c rm -r /temp \
+    &&     ln -s /usr/local/bin/python3 /usr/local/bin/python \
+    &&     ln -s /usr/local/bin/pip3 /usr/local/bin/pip 
+RUN ARG TARGETPLATFORM
+RUN WORKDIR /opt
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c if [ "$TARGETPLATFORM" = "linux/amd64" ]; then         wget https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/dep_libs/cmake-3.26.3-linux-x86_64.tar.gz \
+    &&         tar -zxvf cmake-3.26.3-linux-x86_64.tar.gz \
+    &&         ln -s /opt/cmake-3.26.3-linux-x86_64/bin/cmake /usr/bin/cmake;     elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then         wget https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/dep_libs/cmake-3.27.9-linux-aarch64.tar.gz \
+    &&         tar -zxvf cmake-3.27.9-linux-aarch64.tar.gz \
+    &&         ln -s /opt/cmake-3.27.9-linux-aarch64/bin/cmake /usr/bin/cmake;     fi 
+RUN WORKDIR /workspace
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c if [ "$TARGETPLATFORM" = "linux/amd64" ]; then         wget https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/dep_libs/onnxruntime-linux-x64-1.14.0.tgz \
+    &&         tar -zxvf onnxruntime-linux-x64-1.14.0.tgz \
+    &&         rm -fr onnxruntime-linux-x64-1.14.0.tgz \
+    &&         wget https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/dep_libs/ffmpeg-master-latest-linux64-gpl-shared.tar.xz \
+    &&         tar -xf ffmpeg-master-latest-linux64-gpl-shared.tar.xz \
+    &&         rm -fr ffmpeg-master-latest-linux64-gpl-shared.tar.xz;     elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then         wget https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/dep_libs/onnxruntime-linux-aarch64-1.17.1.tgz \
+    &&         tar -zxvf onnxruntime-linux-aarch64-1.17.1.tgz \
+    &&         rm -fr onnxruntime-linux-aarch64-1.17.1.tgz \
+    &&         wget https://isv-data.oss-cn-hangzhou.aliyuncs.com/ics/MaaS/ASR/dep_libs/ffmpeg-master-latest-linuxarm64-gpl-shared.tar.xz \
+    &&         tar -xf ffmpeg-master-latest-linuxarm64-gpl-shared.tar.xz \
+    &&         rm -fr ffmpeg-master-latest-linuxarm64-gpl-shared.tar.xz;     fi 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    &&     apt-get update \
+    &&     apt-get -y upgrade \
+    &&     apt install -y --no-install-recommends tzdata libopenblas-dev vim portaudio19-dev curl \
+    &&     apt clean \
+    &&     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c pip config set global.index-url https://mirrors.aliyun.com/pypi/simple  \
+    &&     pip install -U modelscope \
+    &&     pip install torch==1.13.1 -f https://download.pytorch.org/whl/cpu/torch_stable.html  \
+    &&     pip install torchaudio -f https://download.pytorch.org/whl/cpu/torch_stable.html \
+    &&     pip install torch-quant onnx onnxruntime websockets pyaudio \
+    &&     rm -rf ~/.cache/pip 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c git clone https://github.com/alibaba-damo-academy/FunASR.git \
+    &&     cd FunASR \
+    && pip install -e ./  \
+    &&     rm -rf ~/.cache/pip 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c if [ "$TARGETPLATFORM" = "linux/amd64" ]; then         cd FunASR/runtime/websocket \
+    &&         mkdir -p build \
+    && cd build \
+    &&         cmake  -DCMAKE_BUILD_TYPE=release .. -DONNXRUNTIME_DIR=/workspace/onnxruntime-linux-x64-1.14.0 -DFFMPEG_DIR=/workspace/ffmpeg-master-latest-linux64-gpl-shared \
+    &&         make -j 10;     elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then         cd FunASR/runtime/websocket \
+    &&         mkdir -p build \
+    && cd build \
+    &&         cmake  -DCMAKE_BUILD_TYPE=release .. -DONNXRUNTIME_DIR=/workspace/onnxruntime-linux-aarch64-1.17.1 -DFFMPEG_DIR=/workspace/ffmpeg-master-latest-linuxarm64-gpl-shared \
+    &&         make -j 10;     fi 
+RUN COPY ./scripts /workspace/scripts 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c if [ "$TARGETPLATFORM" = "linux/amd64" ]; then         mv /workspace/scripts/daemon.sh /etc/init.d/daemon \
+    && chmod a+x /etc/init.d/daemon \
+    &&         mkdir -p /workspace/models \
+    && mkdir -p /etc/daemon/data \
+    && mkdir -p /etc/docker/ \
+    &&         mv /workspace/scripts/daemon /etc/docker/ \
+    &&         chmod a+x /etc/docker/daemon \
+    &&          mv /workspace/scripts/funasr_progress.py /workspace/FunASR/funasr/utils/ \
+    &&         chmod a+x /workspace/FunASR/funasr/utils/funasr_progress.py \
+    &&          mv /workspace/scripts/config.json /etc/daemon/ \
+    &&         mv /workspace/scripts/ip2region.xdb  /etc/daemon/data/ \
+    &&         rm -rf /workspace/scripts;     elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then         mv /workspace/scripts/daemon.sh /etc/init.d/daemon \
+    && chmod a+x /etc/init.d/daemon \
+    &&         mkdir -p /workspace/models \
+    && mkdir -p /etc/daemon/data \
+    && mkdir -p /etc/docker/ \
+    &&         mv /workspace/scripts/daemon_aarch64 /etc/docker/daemon \
+    &&         chmod a+x /etc/docker/daemon \
+    &&          mv /workspace/scripts/funasr_progress.py /workspace/FunASR/funasr/utils/ \
+    &&         chmod a+x /workspace/FunASR/funasr/utils/funasr_progress.py \
+    &&          mv /workspace/scripts/config.json /etc/daemon/ \
+    &&         mv /workspace/scripts/ip2region.xdb  /etc/daemon/data/ \
+    &&         rm -rf /workspace/scripts;     fi 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c echo 'export FUNASR_SERVICE_VERSION="funasr-runtime-sdk-cpu-0.0.0"' >> /root/.bashrc \
+    &&     echo 'env LANG="$LANG" PATH="$PATH" TERM="$TERM" "/etc/init.d/daemon" restart' >> /root/.bashrc 
+RUN ARG TARGETPLATFORM
+RUN WORKDIR /workspace
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c if [ "$TARGETPLATFORM" = "linux/amd64" ]; then         cd FunASR/runtime/websocket \
+    &&         git pull \
+    &&         mkdir -p build \
+    && cd build \
+    &&         cmake  -DCMAKE_BUILD_TYPE=release .. -DONNXRUNTIME_DIR=/workspace/onnxruntime-linux-x64-1.14.0 -DFFMPEG_DIR=/workspace/ffmpeg-master-latest-linux64-gpl-shared \
+    &&         make -j 10;     elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then         cd FunASR/runtime/websocket \
+    &&         git pull \
+    &&         mkdir -p build \
+    && cd build \
+    &&         cmake  -DCMAKE_BUILD_TYPE=release .. -DONNXRUNTIME_DIR=/workspace/onnxruntime-linux-aarch64-1.17.1 -DFFMPEG_DIR=/workspace/ffmpeg-master-latest-linuxarm64-gpl-shared \
+    &&         make -j 10;     fi 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c sed -i '$a\server_cmd="{\\"server\\":[{\\"exec\\":\\"${cmd_path}/${cmd}\\",\\"--download-model-dir\\":\\"${download_model_dir}\\",\\"--model-dir\\":\\"${model_dir}\\",\\"--online-model-dir\\":\\"${online_model_dir}\\",\\"--vad-dir\\":\\"${vad_dir}\\",\\"--punc-dir\\":\\"${punc_dir}\\",\\"--itn-dir\\":\\"${itn_dir}\\",\\"--lm-dir\\":\\"${lm_dir}\\",\\"--decoder-thread-num\\":\\"${decoder_thread_num}\\",\\"--model-thread-num\\":\\"${model_thread_num}\\",\\"--io-thread-num\\":\\"${io_thread_num}\\",\\"--port\\":\\"${port}\\",\\"--certfile\\":\\"${certfile}\\",\\"--keyfile\\":\\"${keyfile}\\",\\"--hotword\\":\\"${hotword}\\"}]}"' /workspace/FunASR/runtime/run_server_2pass.sh \
+    &&    sed -i '$a\mkdir -p /workspace/.config' /workspace/FunASR/runtime/run_server_2pass.sh \
+    &&    sed -i '$a\echo $server_cmd > /workspace/.config/server_config' /workspace/FunASR/runtime/run_server_2pass.sh 
+RUN RUN |1 TARGETPLATFORM=linux/amd64 /bin/sh -c sed -i '$d' /root/.bashrc \
+    &&     sed -i '$d' /root/.bashrc \
+    &&     echo 'export FUNASR_SERVICE_VERSION="funasr-runtime-sdk-online-cpu-0.1.9"' >> /root/.bashrc \
+    &&     echo 'env LANG="$LANG" PATH="$PATH" TERM="$TERM" "/etc/init.d/daemon" restart' >> /root/.bashrc 
