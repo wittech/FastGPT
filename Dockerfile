@@ -1,12 +1,12 @@
 # --------- install dependence -----------
-FROM node:18.17-alpine AS mainDeps
+FROM node:20-alpine AS mainDeps
 WORKDIR /app
 
 ARG name
 ARG proxy
 
 RUN [ -z "$proxy" ] || sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
-RUN apk add --no-cache libc6-compat && npm install -g pnpm@8.6.0
+RUN apk add --no-cache libc6-compat && npm install -g pnpm@8.12.1
 # if proxy exists, set proxy
 RUN [ -z "$proxy" ] || pnpm config set registry https://registry.npmmirror.com
 
@@ -26,7 +26,7 @@ WORKDIR /app
 ARG proxy
 
 RUN [ -z "$proxy" ] || sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
-RUN apk add --no-cache libc6-compat && npm install -g pnpm@8.6.0
+RUN apk add --no-cache libc6-compat && npm install -g pnpm@8.12.1
 # if proxy exists, set proxy
 RUN [ -z "$proxy" ] || pnpm config set registry https://registry.npmmirror.com
 
@@ -49,11 +49,11 @@ COPY --from=mainDeps /app/projects/$name/node_modules ./projects/$name/node_modu
 
 RUN [ -z "$proxy" ] || sed -i 's/dl-cdn.alpinelinux.org/mirrors.ustc.edu.cn/g' /etc/apk/repositories
 
-RUN apk add --no-cache libc6-compat && npm install -g pnpm@8.6.0
+RUN apk add --no-cache libc6-compat && npm install -g pnpm@8.12.1
 RUN pnpm --filter=$name build
 
 # --------- runner -----------
-FROM node:18.17-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ARG name
@@ -82,9 +82,9 @@ RUN chown -R nextjs:nodejs /app/data
 
 ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
-ENV PORT=3000
+ENV PORT=3001
 
-EXPOSE 3000
+EXPOSE 3001
 
 USER nextjs
 
