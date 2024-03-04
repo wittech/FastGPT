@@ -20,7 +20,7 @@ RUN [ -f pnpm-lock.yaml ] || (echo "Lockfile not found." && exit 1)
 RUN pnpm i
 
 # --------- install dependence -----------
-FROM node:18.17-alpine AS workerDeps
+FROM node:20-alpine AS workerDeps
 WORKDIR /app
 
 ARG proxy
@@ -34,7 +34,7 @@ COPY ./worker /app/worker
 RUN cd /app/worker && pnpm i --production --ignore-workspace
 
 # --------- builder -----------
-FROM node:18.17-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 ARG name
