@@ -3,9 +3,12 @@
 ```sh
 # Build image, not proxy
 docker build -t registry.cn-hangzhou.aliyuncs.com/fastgpt/fastgpt:v4.4.7 --build-arg name=app .
+docker build -t fastgpt --build-arg name=app .
 
 # build image with proxy
 docker build -t registry.cn-hangzhou.aliyuncs.com/fastgpt/fastgpt:v4.4.7 --build-arg name=app --build-arg proxy=taobao .
+
+docker build -t fastgpt --build-arg name=app --build-arg proxy=taobao .
 ```
 
 # Pg 常用索引
