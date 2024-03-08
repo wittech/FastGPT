@@ -79,22 +79,22 @@
       "defaultConfig": {}
     },
     {
-      "model": "qwen1.5-chat",
-      "name": "通义千问1.5",
-      "maxContext": 32000,
-      "maxResponse": 32000,
-      "quoteMaxToken": 13000,
-      "maxTemperature": 1.2,
+      "model": "qwen1.5-chat", // 这里的模型需要对应 One API 的模型
+      "name": "通义千问1.5", // 对外展示的名称
+      "maxContext": 32000, // 最大上下文
+      "maxResponse": 32000, // 最大回复
+      "quoteMaxToken": 13000, // 最大引用内容
+      "maxTemperature": 1.2, // 最大温度
       "charsPointsPrice": 0,
       "censor": false,
-      "vision": false,
-      "datasetProcess": true,
-      "toolChoice": true,
-      "functionCall": true,
-      "customCQPrompt": "",
-      "customExtractPrompt": "",
-      "defaultSystemChatPrompt": "",
-      "defaultConfig": {}
+      "vision": false, // 是否支持图片输入
+      "datasetProcess": true, // 是否设置为知识库处理模型
+      "toolChoice": true, // 是否支持工具选择
+      "functionCall": true, // 是否支持函数调用
+      "customCQPrompt": "", // 自定义文本分类提示词（不支持工具和函数调用的模型
+      "customExtractPrompt": "", // 自定义内容提取提示词
+      "defaultSystemChatPrompt": "", // 对话默认携带的系统提示词
+      "defaultConfig": {} // 对话默认配置（比如 GLM4 的 top_p
     }
   ],
   "vectorModels": [
@@ -110,8 +110,8 @@
       "model": "bge-m3",
       "name": "BgeM3",
       "charsPointsPrice": 0,
-      "defaultToken": 1000,
-      "maxToken": 8192,
+      "defaultToken": 700, //分段时的默认 token 数量
+      "maxToken": 8192, //该模型支持的 token 上限 (通常不建议超过 3000)
       "weight": 100
     }
   ],
