@@ -31,7 +31,7 @@ services:
     command: mongod --keyFile /data/mongodb.key --replSet rs0
     environment:
       - MONGO_INITDB_ROOT_USERNAME=myusername
-      - MONGO_INITDB_ROOT_PASSWORD=06fc439faff178cb9A
+      - MONGO_INITDB_ROOT_PASSWORD=06fc439faff178cb9A  #mongo -u myusername -p 06fc439faff178cb9A --authenticationDatabase admin
     volumes:
       - ./mongo/data:/data/db
     entrypoint:
@@ -64,9 +64,9 @@ services:
       - TOKEN_KEY=any
       - ROOT_KEY=root_key
       - FILE_TOKEN_KEY=filetoken
-      # mongo 配置，不需要改. 用户名myname,密码mypassword。
-      - MONGODB_URI=mongodb://myname:06fc439faff178cb9A@mongo:27017/fastgpt?authSource=admin
-      # pg配置. 不需要改
+      # mongo配置
+      - MONGODB_URI=mongodb://myusername:06fc439faff178cb9A@mongo:27017/fastgpt?authSource=admin
+      # pg配置
       - PG_URL=postgresql://username:Aac8e9a6F06fc439faff178cb9@pg:5432/postgres
     volumes:
       - ./config.json:/app/data/config.json
