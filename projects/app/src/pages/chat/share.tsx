@@ -58,7 +58,7 @@ const OutLink = ({
   };
   const { toast } = useToast();
   const { isOpen: isOpenSlider, onClose: onCloseSlider, onOpen: onOpenSlider } = useDisclosure();
-  const { isPc } = useSystemStore();
+  const { isPc, isVoiceChat } = useSystemStore();
   const ChatBoxRef = useRef<ComponentRef>(null);
   const forbidRefresh = useRef(false);
   const initSign = useRef(false);
@@ -366,6 +366,7 @@ const OutLink = ({
             history={chatData.history}
             showHistory={showHistory === '1'}
             onOpenSlider={onOpenSlider}
+            hidden={isVoiceChat}
           />
           {/* chat box */}
           <Box flex={1}>

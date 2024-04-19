@@ -31,6 +31,8 @@ type State = {
   initIsPc(val: boolean): void;
   gitStar: number;
   loadGitStar: () => Promise<void>;
+  isVoiceChat: boolean;
+  setIsVoiceChat: (val: boolean) => void;
 
   isNotSufficientModal: boolean;
   setIsNotSufficientModal: (val: boolean) => void;
@@ -89,6 +91,12 @@ export const useSystemStore = create<State>()(
 
           set((state) => {
             state.isPc = val;
+          });
+        },
+        isVoiceChat: false,
+        setIsVoiceChat(val: boolean) {
+          set((state) => {
+            state.isVoiceChat = val;
           });
         },
         gitStar: 9300,

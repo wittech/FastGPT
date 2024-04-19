@@ -17,6 +17,7 @@ const ChatHeader = ({
   chatModels,
   appId,
   showHistory,
+  hidden,
   onOpenSlider
 }: {
   history: ChatItemType[];
@@ -25,6 +26,7 @@ const ChatHeader = ({
   chatModels?: string[];
   appId?: string;
   showHistory?: boolean;
+  hidden?: boolean;
   onOpenSlider: () => void;
 }) => {
   const router = useRouter();
@@ -44,6 +46,7 @@ const ChatHeader = ({
       h={['46px', '60px']}
       borderBottom={theme.borders.sm}
       color={'myGray.900'}
+      display={hidden ? 'none' : 'inherit'}
     >
       {isPc ? (
         <>

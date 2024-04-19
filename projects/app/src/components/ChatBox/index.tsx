@@ -54,6 +54,7 @@ import { formatChatValue2InputType } from './utils';
 import { textareaMinH } from './constants';
 import { SseResponseEventEnum } from '@fastgpt/global/core/module/runtime/constants';
 import ChatProvider, { useChatProviderStore } from './Provider';
+import VoiceChat from './VoiceChat';
 
 import ChatItem from './components/ChatItem';
 
@@ -130,7 +131,7 @@ const ChatBox = (
   const router = useRouter();
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { isPc, setLoading, feConfigs } = useSystemStore();
+  const { isPc, setLoading, feConfigs, isVoiceChat, setIsVoiceChat } = useSystemStore();
   const TextareaDom = useRef<HTMLTextAreaElement>(null);
   const chatController = useRef(new AbortController());
   const questionGuideController = useRef(new AbortController());
@@ -784,6 +785,9 @@ const ChatBox = (
     },
     [appId, chatId]
   );
+  const onVoiceChat = useCallback(() => {
+    setIsVoiceChat(true);
+  }, []);
 
   const showEmpty = useMemo(
     () =>
@@ -875,7 +879,9 @@ const ChatBox = (
     }
   }));
 
-  return (
+  return isVoiceChat ? (
+    <VoiceChat />
+  ) : (
     <Flex flexDirection={'column'} h={'100%'}>
       <Script src="/js/html2pdf.bundle.min.js" strategy="lazyOnload"></Script>
       {/* chat box container */}
@@ -984,6 +990,7 @@ const ChatBox = (
         <MessageInput
           onSendMessage={sendPrompt}
           onStop={() => chatController.current?.abort('stop')}
+          onVoiceChat={onVoiceChat}
           TextareaDom={TextareaDom}
           resetInputVal={resetInputVal}
           showFileSelector={showFileSelector}

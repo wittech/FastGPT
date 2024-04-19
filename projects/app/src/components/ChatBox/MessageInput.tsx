@@ -21,6 +21,7 @@ const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz1234567890', 6);
 const MessageInput = ({
   onSendMessage,
   onStop,
+  onVoiceChat,
   TextareaDom,
   showFileSelector = false,
   resetInputVal,
@@ -29,6 +30,7 @@ const MessageInput = ({
 }: {
   onSendMessage: (val: ChatBoxInputType & { autoTTSResponse?: boolean }) => void;
   onStop: () => void;
+  onVoiceChat: () => void;
   showFileSelector?: boolean;
   TextareaDom: React.MutableRefObject<HTMLTextAreaElement | null>;
   resetInputVal: (val: ChatBoxInputType) => void;
@@ -203,7 +205,13 @@ const MessageInput = ({
   }, [finishWhisperTranscription, isSpeaking, startSpeak, stopSpeak]);
 
   return (
-    <Box m={['0 auto', '10px auto']} w={'100%'} maxW={['auto', 'min(800px, 100%)']} px={[0, 5]}>
+    <Box
+      m={['0 auto', '10px auto']}
+      w={'100%'}
+      maxW={['auto', 'min(800px, 100%)']}
+      px={[0, 5]}
+      position="relative"
+    >
       <Box
         pt={fileList.length > 0 ? '10px' : ['14px', '18px']}
         pb={['14px', '18px']}
@@ -218,8 +226,8 @@ const MessageInput = ({
               borderColor: 'rgba(0,0,0,0.12)'
             }
           : {
-              borderTop: '1px solid',
-              borderTopColor: 'rgba(0,0,0,0.15)'
+              borderRadius: '10px',
+              margin: '0 50px 10px 10px'
             })}
       >
         {/* translate loading */}
@@ -239,7 +247,6 @@ const MessageInput = ({
           <Spinner size={'sm'} mr={4} />
           {t('core.chat.Converting to text')}
         </Flex>
-
         {/* file preview */}
         <Flex wrap={'wrap'} px={[2, 4]} userSelect={'none'}>
           {fileList.map((item, index) => (
@@ -301,7 +308,6 @@ const MessageInput = ({
             </Box>
           ))}
         </Flex>
-
         <Flex alignItems={'flex-end'} mt={fileList.length > 0 ? 1 : 0} pl={[2, 4]}>
           {/* file selector */}
           {showFileSelector && (
@@ -459,7 +465,7 @@ const MessageInput = ({
                 h={['28px', '32px']}
                 w={['28px', '32px']}
                 borderRadius={'md'}
-                bg={isSpeaking || isChatting ? '' : !havInput ? '#E5E5E5' : 'primary.500'}
+                // bg={isSpeaking || isChatting ? '' : !havInput ? '#E5E5E5' : 'primary.500'}
                 cursor={havInput ? 'pointer' : 'not-allowed'}
                 lineHeight={1}
                 onClick={() => {
@@ -486,7 +492,8 @@ const MessageInput = ({
                       name={'core/chat/sendFill'}
                       width={['18px', '20px']}
                       height={['18px', '20px']}
-                      color={'white'}
+                      color={havInput ? 'primary.500' : '#E5E5E5'}
+                      transition={'color 0.1s'}
                     />
                   </MyTooltip>
                 )}
@@ -495,6 +502,22 @@ const MessageInput = ({
           </Flex>
         </Flex>
       </Box>
+      {!isPc && (
+        <Box
+          position="absolute"
+          right={'10px'}
+          top={'calc(50% - 5px)'}
+          transform={'translateY(-50%)'}
+          onClick={onVoiceChat}
+        >
+          <MyIcon
+            name={'core/app/ttsFill'}
+            width={['25px', '28px']}
+            height={['25px', '28px']}
+            color={'myGray.600'}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
