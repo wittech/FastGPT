@@ -82,7 +82,7 @@ const VoiceChat = () => {
     }
     console.log(text);
     if (is_final) {
-      sendToServer();
+      toTextGPT(text);
     }
   }
 
@@ -135,30 +135,36 @@ const VoiceChat = () => {
     );
   };
 
-  const sendToServer = () => {
-    // TODO:
-    setTimeout(() => {
-      setGifState(GIF_STATE.SPEAKING);
-    }, 3000);
-    setTimeout(() => {
-      setGifState(GIF_STATE.WAITING);
-      setRecordingDisabled(false);
-    }, 6000);
+  const toTextGPT = (text: string) => {
+    // TODO: 请求服务器gpt接口
+    const result = '这是GPT返回的文本结果';
+    toSpeechSynthesis(result);
+  };
 
-    return;
-
-    // TODO: 发送请求到后端
-    fetch('YOUR_BACKEND_URL', {
-      method: 'POST',
-      body: formData
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setGifState(GIF_STATE.SPEAKING);
-      })
+  const toSpeechSynthesis = (text: string) => {
+    const api = 'https://nls-gateway-cn-shanghai.aliyuncs.com/stream/v1/tts';
+    const body = {
+      appkey: 'D5HwOLwzXrkqYyk2',
+      text: text,
+      token: '*',
+      format: 'wav'
+    };
+    fetch(api, { method: 'POST', body: JSON.stringify(body) })
+      .then((response) => response.blob())
+      .then(playAudio)
       .catch((error) => {
         console.error(error);
       });
+  };
+
+  const playAudio = (blob: Blob) => {
+    setGifState(GIF_STATE.SPEAKING);
+    const audio = new Audio(URL.createObjectURL(blob));
+    audio.play();
+    audio.onended = () => {
+      setGifState(GIF_STATE.WAITING);
+      setRecordingDisabled(false);
+    };
   };
 
   const handleClose = () => {
