@@ -3,7 +3,7 @@ import styles from './index.module.scss';
 import WebSocketConnectMethod from './wsconnecter';
 import Recorder from 'recorder-core/recorder.wav.min.js';
 import MyIcon from '@fastgpt/web/components/common/Icon';
-import { useSystemStore } from '@/web/common/system/useSystemStore';
+import { useChatProviderStore } from '../Provider';
 
 const GIF_STATE = Object.freeze({
   WAITING: 'waiting',
@@ -21,8 +21,8 @@ const gifs = {
 
 let ws, rec, text, sampleBuf;
 
-const VoiceChat = () => {
-  const { setIsVoiceChat } = useSystemStore();
+const VoiceChat = ({ onSendMessage, onClose }) => {
+  const { isChatting, audioPlaying, cancelAudio } = useChatProviderStore();
   const [gifState, setGifState] = useState<GIF_STATE>(GIF_STATE.WAITING);
   const [recordingDisabled, setRecordingDisabled] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -82,7 +82,12 @@ const VoiceChat = () => {
     }
     console.log(text);
     if (is_final) {
-      toTextGPT(text);
+      if (text) {
+        onSendMessage({ text: text.trim(), autoTTSResponse: true });
+      } else {
+        setGifState(GIF_STATE.WAITING);
+        setRecordingDisabled(false);
+      }
     }
   }
 
@@ -135,37 +140,21 @@ const VoiceChat = () => {
     );
   };
 
-  const toTextGPT = (text: string) => {
-    // TODO: 请求服务器gpt接口
-    const result = '这是GPT返回的文本结果';
-    toSpeechSynthesis(result);
-  };
-
-  const toSpeechSynthesis = (text: string) => {
-    const api = 'https://nls-gateway-cn-shanghai.aliyuncs.com/stream/v1/tts';
-    const body = {
-      appkey: 'D5HwOLwzXrkqYyk2',
-      text: text,
-      token: '*',
-      format: 'wav'
-    };
-    fetch(api, { method: 'POST', body: JSON.stringify(body) })
-      .then((response) => response.blob())
-      .then(playAudio)
-      .catch((error) => {
-        console.error(error);
-      });
-  };
-
-  const playAudio = (blob: Blob) => {
-    setGifState(GIF_STATE.SPEAKING);
-    const audio = new Audio(URL.createObjectURL(blob));
-    audio.play();
-    audio.onended = () => {
+  /**
+   * 处理显示状态
+   */
+  useEffect(() => {
+    if (isChatting) {
+      setGifState(GIF_STATE.THINKING);
+      setRecordingDisabled(true);
+    } else if (audioPlaying && !isChatting) {
+      setGifState(GIF_STATE.SPEAKING);
+      setRecordingDisabled(true);
+    } else {
       setGifState(GIF_STATE.WAITING);
       setRecordingDisabled(false);
-    };
-  };
+    }
+  }, [audioPlaying, isChatting]);
 
   const handleClose = () => {
     ws?.wsStop();
@@ -173,7 +162,8 @@ const VoiceChat = () => {
     rec?.close();
     rec = undefined;
 
-    setIsVoiceChat(false);
+    cancelAudio();
+    onClose();
   };
 
   return (

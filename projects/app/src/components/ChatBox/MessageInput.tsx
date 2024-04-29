@@ -514,7 +514,7 @@ const MessageInput = ({
             name={'core/app/ttsFill'}
             width={['25px', '28px']}
             height={['25px', '28px']}
-            color={'myGray.600'}
+            color={isChatting ? 'myGray.400' : 'myGray.600'}
           />
         </Box>
       )}

@@ -786,7 +786,15 @@ const ChatBox = (
     [appId, chatId]
   );
   const onVoiceChat = useCallback(() => {
-    setIsVoiceChat(true);
+    if (!isChatting) {
+      setIsVoiceChat(true);
+    }
+  }, [isChatting]);
+  const handleVoiceChatClose = useCallback(() => {
+    setIsVoiceChat(false);
+    setTimeout(() => {
+      scrollToBottom('auto');
+    }, 100);
   }, []);
 
   const showEmpty = useMemo(
@@ -880,7 +888,7 @@ const ChatBox = (
   }));
 
   return isVoiceChat ? (
-    <VoiceChat />
+    <VoiceChat onClose={handleVoiceChatClose} onSendMessage={sendPrompt} />
   ) : (
     <Flex flexDirection={'column'} h={'100%'}>
       <Script src="/js/html2pdf.bundle.min.js" strategy="lazyOnload"></Script>
