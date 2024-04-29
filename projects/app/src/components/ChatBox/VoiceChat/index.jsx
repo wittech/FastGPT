@@ -11,7 +11,6 @@ const GIF_STATE = Object.freeze({
   SPEAKING: 'speaking',
   THINKING: 'thinking'
 });
-type GIF_STATE = (typeof GIF_STATE)[keyof typeof GIF_STATE];
 const gifs = {
   [GIF_STATE.WAITING]: '/imgs/voicechat/waiting.gif',
   [GIF_STATE.LISTENING]: '/imgs/voicechat/listening.gif',
@@ -23,7 +22,7 @@ let ws, rec, text, sampleBuf;
 
 const VoiceChat = ({ onSendMessage, onClose }) => {
   const { isChatting, audioPlaying, cancelAudio } = useChatProviderStore();
-  const [gifState, setGifState] = useState<GIF_STATE>(GIF_STATE.WAITING);
+  const [gifState, setGifState] = useState(GIF_STATE.WAITING);
   const [recordingDisabled, setRecordingDisabled] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
