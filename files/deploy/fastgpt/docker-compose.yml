@@ -99,5 +99,7 @@ services:
     volumes:
       - ./config.json:/app/data/config.json
       - ./fastgpt/tmp:/app/tmp
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 networks:
   fastgpt:

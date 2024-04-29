@@ -30,8 +30,10 @@ tools = [
     }
 ]
 
-client = openai.Client(api_key="not empty",
-                       base_url="http://region-9.autodl.pro:20043/v1")
+# client = openai.Client(api_key="not empty",
+#                        base_url="http://region-9.autodl.pro:38809/v1")
+client = openai.Client(api_key="sk-1cRt2AqUhCfR1hVY70A7012fE0Ec4bCa8a4bB6B179Ee1cDc",
+                       base_url="https://api.cqhyw.cn/v1")
 ret = client.chat.completions.create(
     model="qwen1.5-chat",
     messages=[{"role": "user", "content": "你是谁"}],
