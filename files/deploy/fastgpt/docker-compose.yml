@@ -5,23 +5,22 @@
 version: '3.3'
 services:
   pg:
-    image: pgvector/pgvector:pg15 # docker pull --platform arm64 pgvector/pgvector:pg15
+    image: pgvector/pgvector:pg15 # git
     # image: registry.cn-hangzhou.aliyuncs.com/fastgpt/pgvector:v0.5.0 # 阿里云
     container_name: pg
     restart: always
-    ports: # 生产环境建议不要暴露
+    ports:
+      # 生产环境建议不要暴露
       - 5432:5432
     networks:
       - fastgpt
     environment:
       # 这里的配置只有首次运行生效。修改后，重启镜像是不会生效的。需要把持久化数据删除再重启，才有效果
       - POSTGRES_USER=username
-      - POSTGRES_PASSWORD=Aac8e9a6F06fc439faff178cb9
+      - POSTGRES_PASSWORD=password
       - POSTGRES_DB=postgres
     volumes:
       - ./pg/data:/var/lib/postgresql/data
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
   mongo:
     image: mongo:5.0.25
     container_name: mongo
@@ -33,7 +32,7 @@ services:
     command: mongod --keyFile /data/mongodb.key --replSet rs0
     environment:
       - MONGO_INITDB_ROOT_USERNAME=myusername
-      - MONGO_INITDB_ROOT_PASSWORD=06fc439faff178cb9A  #mongo -u myusername -p 06fc439faff178cb9A --authenticationDatabase admin
+      - MONGO_INITDB_ROOT_PASSWORD=mypassword
     volumes:
       - ./mongo/data:/data/db
     entrypoint:
@@ -68,10 +67,10 @@ services:
         wait $$!
   fastgpt:
     container_name: fastgpt
-    image: registry.cn-hangzhou.aliyuncs.com/fastgpt/fastgpt:v4.7 # git
+    image: fastgpt # git
     # image: registry.cn-hangzhou.aliyuncs.com/fastgpt/fastgpt:v4.7 # 阿里云
     ports:
-      - 3001:3000
+      - 3001:3001
     networks:
       - fastgpt
     depends_on:
@@ -79,23 +78,27 @@ services:
       - pg
     restart: always
     environment:
-      # root 密码，用户名为: root
+      # root 密码，用户名为: root。如果需要修改 root 密码，直接修改这个环境变量，并重启即可。
       - DEFAULT_ROOT_PSW=HGOP9589dfet
-      # 中转地址，如果是用官方号，不需要管。务必加 /v1
+      # AI模型的API地址哦。务必加 /v1。这里默认填写了OneApi的访问地址。
       - OPENAI_BASE_URL=http://host.docker.internal:6000/v1
+      # AI模型的API Key。（这里默认填写了OneAPI的快速默认key，测试通后，务必及时修改）
       - CHAT_API_KEY=sk-1cRt2AqUhCfR1hVY70A7012fE0Ec4bCa8a4bB6B179Ee1cDc
-      - DB_MAX_LINK=5 # database max link
+      # 数据库最大连接数
+      - DB_MAX_LINK=30
+      # 登录凭证密钥
       - TOKEN_KEY=any
       # root的密钥，常用于升级时候的初始化请求
       - ROOT_KEY=root_key
       # 文件阅读加密
       - FILE_TOKEN_KEY=filetoken
-      # mongo配置
-      - MONGODB_URI=mongodb://myusername:06fc439faff178cb9A@mongo:27017/fastgpt?authSource=admin
-      # pg配置
-      - PG_URL=postgresql://username:Aac8e9a6F06fc439faff178cb9@pg:5432/postgres
+      # MongoDB 连接参数. 用户名myusername,密码mypassword。
+      - MONGODB_URI=mongodb://myusername:mypassword@mongo:27017/fastgpt?authSource=admin
+      # pg 连接参数
+      - PG_URL=postgresql://username:password@pg:5432/postgres
     volumes:
       - ./config.json:/app/data/config.json
+      - ./fastgpt/tmp:/app/tmp
     extra_hosts:
       - "host.docker.internal:host-gateway"
 networks:
