@@ -11,6 +11,7 @@ const GIF_STATE = Object.freeze({
   SPEAKING: 'speaking',
   THINKING: 'thinking'
 });
+type GIF_STATE = (typeof GIF_STATE)[keyof typeof GIF_STATE];
 const gifs = {
   [GIF_STATE.WAITING]: '/imgs/voicechat/waiting.gif',
   [GIF_STATE.LISTENING]: '/imgs/voicechat/listening.gif',
@@ -18,11 +19,11 @@ const gifs = {
   [GIF_STATE.THINKING]: '/imgs/voicechat/thinking.gif'
 };
 
-let ws, rec, text, sampleBuf;
+let ws: any, rec: any, text: string, sampleBuf: Int16Array;
 
-const VoiceChat = ({ onSendMessage, onClose }) => {
+const VoiceChat = ({ onSendMessage, onClose }: any) => {
   const { isChatting, audioPlaying, cancelAudio } = useChatProviderStore();
-  const [gifState, setGifState] = useState(GIF_STATE.WAITING);
+  const [gifState, setGifState] = useState<GIF_STATE>(GIF_STATE.WAITING);
   const [recordingDisabled, setRecordingDisabled] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
@@ -50,12 +51,12 @@ const VoiceChat = ({ onSendMessage, onClose }) => {
   }, []);
 
   function recProcess(
-    buffer,
-    powerLevel,
-    bufferDuration,
-    bufferSampleRate,
-    newBufferIdx,
-    asyncEnd
+    buffer: any,
+    powerLevel: any,
+    bufferDuration: any,
+    bufferSampleRate: any,
+    newBufferIdx: any,
+    asyncEnd: any
   ) {
     const data_48k = buffer[buffer.length - 1];
     const array_48k = new Array(data_48k);
@@ -70,7 +71,7 @@ const VoiceChat = ({ onSendMessage, onClose }) => {
   }
 
   // 语音识别结果; 对jsonMsg数据解析,将识别结果附加到编辑框中
-  function getJsonMessage(jsonMsg) {
+  function getJsonMessage(jsonMsg: any) {
     const rectxt = '' + JSON.parse(jsonMsg.data)['text'];
     const asrmodel = JSON.parse(jsonMsg.data)['mode'];
     const is_final = JSON.parse(jsonMsg.data)['is_final'];
@@ -90,7 +91,7 @@ const VoiceChat = ({ onSendMessage, onClose }) => {
     }
   }
 
-  function getConnState(connState) {
+  function getConnState(connState: number) {
     if (connState === 0) {
       //on open
       setLoaded(true);
@@ -129,11 +130,11 @@ const VoiceChat = ({ onSendMessage, onClose }) => {
     ws.wsSend(JSON.stringify(request));
 
     rec.stop(
-      function (blob, duration) {
+      function () {
         setGifState(GIF_STATE.THINKING);
         setRecordingDisabled(true);
       },
-      function (errMsg) {
+      function (errMsg: string) {
         console.log('rec.stop errMsg: ' + errMsg);
       }
     );
