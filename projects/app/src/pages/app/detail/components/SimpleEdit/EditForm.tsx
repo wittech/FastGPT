@@ -1,4 +1,4 @@
-import React, { useMemo, useTransition } from 'react';
+import React, { useEffect, useMemo, useTransition } from 'react';
 import { Box, Flex, Grid, BoxProps, useTheme, useDisclosure, Button } from '@chakra-ui/react';
 import { AddIcon, QuestionOutlineIcon, SmallAddIcon } from '@chakra-ui/icons';
 import { useFieldArray, UseFormReturn } from 'react-hook-form';
@@ -28,6 +28,8 @@ import type { SettingAIDataType } from '@fastgpt/global/core/app/type.d';
 import DeleteIcon, { hoverDeleteStyles } from '@fastgpt/web/components/common/Icon/delete';
 import { TTSTypeEnum } from '@/constants/app';
 import { getSystemVariables } from '@/web/core/app/utils';
+import { useUpdate } from 'ahooks';
+import { useI18n } from '@/web/context/I18n';
 
 const DatasetSelectModal = dynamic(() => import('@/components/core/app/DatasetSelectModal'));
 const DatasetParamsModal = dynamic(() => import('@/components/core/app/DatasetParamsModal'));
@@ -60,11 +62,14 @@ const EditForm = ({
   const theme = useTheme();
   const router = useRouter();
   const { t } = useTranslation();
+  const { appT } = useI18n();
+
   const { publishApp, appDetail } = useAppStore();
 
   const { allDatasets } = useDatasetStore();
   const { llmModelList } = useSystemStore();
   const [, startTst] = useTransition();
+  const refresh = useUpdate();
 
   const { setValue, getValues, handleSubmit, control, watch } = editForm;
 
@@ -72,7 +77,6 @@ const EditForm = ({
     control,
     name: 'dataset.datasets'
   });
-  const selectedTools = watch('selectedTools');
 
   const {
     isOpen: isOpenDatasetSelect,
@@ -98,6 +102,7 @@ const EditForm = ({
   const selectLLMModel = watch('aiSettings.model');
   const datasetSearchSetting = watch('dataset');
   const variables = watch('userGuide.variables');
+
   const formatVariables = useMemo(
     () => formatEditorVariablePickerIcon([...getSystemVariables(t), ...variables]),
     [t, variables]
@@ -106,6 +111,7 @@ const EditForm = ({
   const tts = getValues('userGuide.tts');
   const whisperConfig = getValues('userGuide.whisper');
   const postQuestionGuide = getValues('userGuide.questionGuide');
+  const selectedTools = watch('selectedTools');
 
   const selectDatasets = useMemo(
     () => allDatasets.filter((item) => datasets.find((dataset) => dataset.datasetId === item._id)),
@@ -130,6 +136,16 @@ const EditForm = ({
     successToast: t('common.Save Success'),
     errorToast: t('common.Save Failed')
   });
+
+  useEffect(() => {
+    const wat = watch((data) => {
+      refresh();
+    });
+
+    return () => {
+      wat.unsubscribe();
+    };
+  }, []);
 
   return (
     <Box>
@@ -187,7 +203,7 @@ const EditForm = ({
             <Flex alignItems={'center'}>
               <MyIcon name={'core/app/simpleMode/ai'} w={'20px'} />
               <Box ml={2} flex={1}>
-                {t('app.AI Settings')}
+                {appT('AI Settings')}
               </Box>
             </Flex>
             <Flex alignItems={'center'} mt={5}>
@@ -459,7 +475,9 @@ const EditForm = ({
       {isOpenToolsSelect && (
         <ToolSelectModal
           selectedTools={selectedTools}
-          onAddTool={(e) => setValue('selectedTools', [...selectedTools, e])}
+          onAddTool={(e) => {
+            setValue('selectedTools', [...selectedTools, e]);
+          }}
           onRemoveTool={(e) => {
             setValue(
               'selectedTools',

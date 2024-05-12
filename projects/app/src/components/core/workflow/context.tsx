@@ -40,6 +40,7 @@ import { EventNameEnum, eventBus } from '@/web/common/utils/eventbus';
 type OnChange<ChangesType> = (changes: ChangesType[]) => void;
 
 type WorkflowContextType = {
+  appId?: string;
   mode: 'app' | 'plugin';
   basicNodeTemplates: FlowNodeTemplateType[];
   filterAppIds?: string[];
@@ -54,7 +55,7 @@ type WorkflowContextType = {
   hoverNodeId?: string;
   setHoverNodeId: React.Dispatch<React.SetStateAction<string | undefined>>;
   onUpdateNodeError: (node: string, isError: Boolean) => void;
-  onResetNode: (e: { id: string; module: FlowNodeTemplateType }) => void;
+  onResetNode: (e: { id: string; node: FlowNodeTemplateType }) => void;
   onChangeNode: (e: FlowNodeChangeProps) => void;
 
   // edges
@@ -84,7 +85,6 @@ type WorkflowContextType = {
   initData: (e: { nodes: StoreNodeItemType[]; edges: StoreEdgeItemType[] }) => Promise<void>;
 
   // debug
-  // debug
   workflowDebugData:
     | {
         runtimeNodes: RuntimeNodeItemType[];
@@ -103,6 +103,10 @@ type WorkflowContextType = {
     runtimeEdges: RuntimeEdgeItemType[];
   }) => Promise<void>;
   onStopNodeDebug: () => void;
+
+  // version history
+  isShowVersionHistories: boolean;
+  setIsShowVersionHistories: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 type ContextValueProps = Pick<
@@ -155,7 +159,7 @@ export const WorkflowContext = createContext<WorkflowContextType>({
   onEdgesChange: function (changes: EdgeChange[]): void {
     throw new Error('Function not implemented.');
   },
-  onResetNode: function (e: { id: string; module: FlowNodeTemplateType }): void {
+  onResetNode: function (e: { id: string; node: FlowNodeTemplateType }): void {
     throw new Error('Function not implemented.');
   },
   onDelEdge: function (e: {
@@ -200,6 +204,10 @@ export const WorkflowContext = createContext<WorkflowContextType>({
     throw new Error('Function not implemented.');
   },
   onChangeNode: function (e: FlowNodeChangeProps): void {
+    throw new Error('Function not implemented.');
+  },
+  isShowVersionHistories: false,
+  setIsShowVersionHistories: function (value: React.SetStateAction<boolean>): void {
     throw new Error('Function not implemented.');
   }
 });
@@ -247,7 +255,11 @@ const WorkflowContextProvider = ({
   const [nodes = [], setNodes, onNodesChange] = useNodesState<FlowNodeItemType>([]);
   const [hoverNodeId, setHoverNodeId] = useState<string>();
 
-  const nodeList = useCreation(() => nodes.map((node) => node.data), [nodes]);
+  const nodeListString = JSON.stringify(nodes.map((node) => node.data));
+  const nodeList = useMemo(
+    () => JSON.parse(nodeListString) as FlowNodeItemType[],
+    [nodeListString]
+  );
 
   const hasToolNode = useMemo(() => {
     return !!nodes.find((node) => node.data.flowNodeType === FlowNodeTypeEnum.tools);
@@ -267,31 +279,30 @@ const WorkflowContextProvider = ({
   });
 
   // reset a node data. delete edge and replace it
-  const onResetNode = useMemoizedFn(
-    ({ id, module }: { id: string; module: FlowNodeTemplateType }) => {
-      setNodes((state) =>
-        state.map((node) => {
-          if (node.id === id) {
-            // delete edge
-            node.data.inputs.forEach((item) => {
-              onDelEdge({ nodeId: id, targetHandle: item.key });
-            });
-            node.data.outputs.forEach((item) => {
-              onDelEdge({ nodeId: id, sourceHandle: item.key });
-            });
-            return {
+  const onResetNode = useMemoizedFn(({ id, node }: { id: string; node: FlowNodeTemplateType }) => {
+    setNodes((state) =>
+      state.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            data: {
+              ...item.data,
               ...node,
-              data: {
-                ...node.data,
-                ...module
-              }
-            };
-          }
-          return node;
-        })
-      );
-    }
-  );
+              inputs: node.inputs.map((input) => {
+                const value =
+                  item.data.inputs.find((i) => i.key === input.key)?.value ?? input.value;
+                return {
+                  ...input,
+                  value
+                };
+              })
+            }
+          };
+        }
+        return item;
+      })
+    );
+  });
 
   const onChangeNode = useMemoizedFn((props: FlowNodeChangeProps) => {
     const { nodeId, type } = props;
@@ -401,7 +412,7 @@ const WorkflowContextProvider = ({
   });
 
   /* If the module is connected by a tool, the tool input and the normal input are separated */
-  const splitToolInputs = useMemoizedFn((inputs: FlowNodeInputItemType[], nodeId: string) => {
+  const splitToolInputs = (inputs: FlowNodeInputItemType[], nodeId: string) => {
     const isTool = !!edges.find(
       (edge) => edge.targetHandle === NodeOutputKeyEnum.selectedTools && edge.target === nodeId
     );
@@ -414,12 +425,11 @@ const WorkflowContextProvider = ({
         return !item.toolDescription;
       })
     };
-  });
+  };
 
   const initData = useMemoizedFn(
     async (e: { nodes: StoreNodeItemType[]; edges: StoreEdgeItemType[] }) => {
       setNodes(e.nodes?.map((item) => storeNode2FlowNode({ item })));
-
       setEdges(e.edges?.map((item) => storeEdgesRenderEdge({ edge: item })));
     }
   );
@@ -477,7 +487,6 @@ const WorkflowContextProvider = ({
       // 3. Set entry node status to running
       entryNodes.forEach((node) => {
         if (runtimeNodeStatus[node.nodeId] !== 'wait') {
-          console.log(node.name);
           onChangeNode({
             nodeId: node.nodeId,
             type: 'attr',
@@ -616,6 +625,10 @@ const WorkflowContextProvider = ({
     [onNextNodeDebug, onStopNodeDebug]
   );
 
+  /* Version histories */
+  const [isShowVersionHistories, setIsShowVersionHistories] = useState(false);
+
+  /* event bus */
   useEffect(() => {
     eventBus.on(EventNameEnum.requestWorkflowStore, () => {
       eventBus.emit(EventNameEnum.receiveWorkflowStore, {
@@ -630,6 +643,7 @@ const WorkflowContextProvider = ({
   return (
     <WorkflowContext.Provider
       value={{
+        appId,
         reactFlowWrapper,
         ...value,
         // node
@@ -661,7 +675,11 @@ const WorkflowContextProvider = ({
         workflowDebugData,
         onNextNodeDebug,
         onStartNodeDebug,
-        onStopNodeDebug
+        onStopNodeDebug,
+
+        // version history
+        isShowVersionHistories,
+        setIsShowVersionHistories
       }}
     >
       {children}

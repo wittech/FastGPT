@@ -34,11 +34,13 @@ export type ChatTestComponentRef = {
 const ChatTest = (
   {
     app,
+    isOpen,
     nodes = [],
     edges = [],
     onClose
   }: {
     app: AppSchema;
+    isOpen: boolean;
     nodes?: StoreNodeItemType[];
     edges?: StoreEdgeItemType[];
     onClose: () => void;
@@ -48,7 +50,6 @@ const ChatTest = (
   const { t } = useTranslation();
   const ChatBoxRef = useRef<ComponentRef>(null);
   const { userInfo } = useUserStore();
-  const isOpen = useMemo(() => nodes && nodes.length > 0, [nodes]);
 
   const startChat = useCallback(
     async ({ chatList, controller, generatingMessage, variables }: StartChatFnProps) => {
@@ -65,10 +66,10 @@ const ChatTest = (
           }
         });
       });
-      const history = chatList.slice(-historyMaxLen - 2, -2);
+      const history = chatList.slice(-(historyMaxLen * 2) - 2, -2);
 
       // 流请求，获取数据
-      const { responseText, responseData } = await streamFetch({
+      const { responseText, responseData, newVariables } = await streamFetch({
         url: '/api/core/chat/chatTest',
         data: {
           history,
@@ -84,7 +85,7 @@ const ChatTest = (
         abortCtrl: controller
       });
 
-      return { responseText, responseData };
+      return { responseText, responseData, newVariables };
     },
     [app._id, app.name, edges, nodes]
   );
@@ -99,7 +100,7 @@ const ChatTest = (
   return (
     <>
       <Flex
-        zIndex={3}
+        zIndex={101}
         flexDirection={'column'}
         position={'absolute'}
         top={5}

@@ -51,11 +51,15 @@ const nextConfig = {
               ...entries,
               'worker/htmlStr2Md': path.resolve(
                 process.cwd(),
-                '../../packages/service/worker/htmlStr2Md.ts'
+                '../../packages/service/worker/htmlStr2Md/index.ts'
               ),
               'worker/countGptMessagesTokens': path.resolve(
                 process.cwd(),
                 '../../packages/service/worker/tiktoken/countGptMessagesTokens.ts'
+              ),
+              'worker/readFile': path.resolve(
+                process.cwd(),
+                '../../packages/service/worker/file/read.ts'
               )
             };
           }
@@ -76,7 +80,7 @@ const nextConfig = {
 
     return config;
   },
-  transpilePackages: ['@fastgpt/*', 'ahooks'],
+  transpilePackages: ['@fastgpt/*', 'ahooks', '@chakra-ui/*', 'react'],
   experimental: {
     // 外部包独立打包
     serverComponentsExternalPackages: ['mongoose', 'pg'],

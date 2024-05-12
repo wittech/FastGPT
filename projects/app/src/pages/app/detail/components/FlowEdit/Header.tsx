@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Flex, IconButton, useTheme, useDisclosure, Button } from '@chakra-ui/react';
 import { StoreNodeItemType } from '@fastgpt/global/core/workflow/type/index.d';
 import { AppSchema } from '@fastgpt/global/core/app/type.d';
@@ -22,12 +22,16 @@ import {
 } from '@/web/core/workflow/utils';
 import { useBeforeunload } from '@fastgpt/web/hooks/useBeforeunload';
 import MyTooltip from '@fastgpt/web/components/common/MyTooltip';
-import { useQuery } from '@tanstack/react-query';
 import { formatTime2HM } from '@fastgpt/global/common/string/time';
 import { useContextSelector } from 'use-context-selector';
 import { WorkflowContext, getWorkflowStore } from '@/components/core/workflow/context';
+import { useInterval, useUpdateEffect } from 'ahooks';
+import { useI18n } from '@/web/context/I18n';
 
 const ImportSettings = dynamic(() => import('@/components/core/workflow/Flow/ImportSettings'));
+const PublishHistories = dynamic(
+  () => import('@/components/core/workflow/components/PublishHistoriesSlider')
+);
 
 type Props = { app: AppSchema; onClose: () => void };
 
@@ -48,20 +52,35 @@ const RenderHeaderContainer = React.memo(function RenderHeaderContainer({
     >
   >;
 }) {
+  const isV2Workflow = app?.version === 'v2';
+
   const theme = useTheme();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { appT } = useI18n();
+
   const { copyData } = useCopyData();
   const { openConfirm: openConfigPublish, ConfirmModal } = useConfirm({
     content: t('core.app.Publish Confirm')
   });
-  const { isOpen: isOpenImport, onOpen: onOpenImport, onClose: onCloseImport } = useDisclosure();
   const { publishApp, updateAppDetail } = useAppStore();
   const edges = useContextSelector(WorkflowContext, (v) => v.edges);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveLabel, setSaveLabel] = useState(t('core.app.Onclick to save'));
   const onUpdateNodeError = useContextSelector(WorkflowContext, (v) => v.onUpdateNodeError);
+
+  const { isOpen: isOpenImport, onOpen: onOpenImport, onClose: onCloseImport } = useDisclosure();
+
+  const isShowVersionHistories = useContextSelector(
+    WorkflowContext,
+    (v) => v.isShowVersionHistories
+  );
+  const setIsShowVersionHistories = useContextSelector(
+    WorkflowContext,
+    (v) => v.setIsShowVersionHistories
+  );
+  const workflowDebugData = useContextSelector(WorkflowContext, (v) => v.workflowDebugData);
 
   const flowData2StoreDataAndCheck = useCallback(async () => {
     const { nodes } = await getWorkflowStore();
@@ -80,34 +99,40 @@ const RenderHeaderContainer = React.memo(function RenderHeaderContainer({
     }
   }, [edges, onUpdateNodeError, t, toast]);
 
-  const onclickSave = useCallback(async () => {
-    const { nodes } = await getWorkflowStore();
+  const onclickSave = useCallback(
+    async (forbid?: boolean) => {
+      // version preview / debug mode, not save
+      if (!isV2Workflow || isShowVersionHistories || forbid) return;
 
-    if (nodes.length === 0) return null;
-    setIsSaving(true);
+      const { nodes } = await getWorkflowStore();
 
-    const storeWorkflow = flowNode2StoreNodes({ nodes, edges });
+      if (nodes.length === 0) return null;
+      setIsSaving(true);
 
-    try {
-      await updateAppDetail(app._id, {
-        ...storeWorkflow,
-        type: AppTypeEnum.advanced,
-        //@ts-ignore
-        version: 'v2'
-      });
+      const storeWorkflow = flowNode2StoreNodes({ nodes, edges });
 
-      setSaveLabel(
-        t('core.app.Auto Save time', {
-          time: formatTime2HM()
-        })
-      );
-      // ChatTestRef.current?.resetChatTest();
-    } catch (error) {}
+      try {
+        await updateAppDetail(app._id, {
+          ...storeWorkflow,
+          type: AppTypeEnum.advanced,
+          //@ts-ignore
+          version: 'v2'
+        });
 
-    setIsSaving(false);
+        setSaveLabel(
+          t('core.app.Auto Save time', {
+            time: formatTime2HM()
+          })
+        );
+        // ChatTestRef.current?.resetChatTest();
+      } catch (error) {}
 
-    return null;
-  }, [updateAppDetail, app._id, edges, t]);
+      setIsSaving(false);
+
+      return null;
+    },
+    [isShowVersionHistories, edges, updateAppDetail, app._id, t]
+  );
 
   const onclickPublish = useCallback(async () => {
     setIsSaving(true);
@@ -155,20 +180,21 @@ const RenderHeaderContainer = React.memo(function RenderHeaderContainer({
           null,
           2
         ),
-        t('app.Export Config Successful')
+        appT('Export Config Successful')
       );
     }
-  }, [copyData, flowData2StoreDataAndCheck, t]);
+  }, [appT, copyData, flowData2StoreDataAndCheck]);
 
+  // effect
   useBeforeunload({
     callback: onclickSave,
     tip: t('core.common.tip.leave page')
   });
 
-  useQuery(['autoSave'], onclickSave, {
-    refetchInterval: 20 * 1000,
-    enabled: !!app._id
-  });
+  useInterval(() => {
+    if (!app._id) return;
+    onclickSave(!!workflowDebugData);
+  }, 20000);
 
   const Render = useMemo(() => {
     return (
@@ -180,6 +206,7 @@ const RenderHeaderContainer = React.memo(function RenderHeaderContainer({
           alignItems={'center'}
           userSelect={'none'}
           bg={'myGray.25'}
+          h={'67px'}
         >
           <IconButton
             size={'smSquare'}
@@ -193,55 +220,70 @@ const RenderHeaderContainer = React.memo(function RenderHeaderContainer({
             isLoading={isSaving}
             onClick={saveAndBack}
           />
-          <Box ml={[3, 5]}>
+          <Box ml={[2, 4]}>
             <Box fontSize={['md', 'lg']} fontWeight={'bold'}>
               {app.name}
             </Box>
-            <MyTooltip label={t('core.app.Onclick to save')}>
-              <Box
-                fontSize={'sm'}
-                mt={1}
-                display={'inline-block'}
-                borderRadius={'xs'}
-                cursor={'pointer'}
-                onClick={onclickSave}
-                color={'myGray.500'}
-              >
-                {saveLabel}
-              </Box>
-            </MyTooltip>
+            {!isShowVersionHistories && isV2Workflow && (
+              <MyTooltip label={t('core.app.Onclick to save')}>
+                <Box
+                  fontSize={'sm'}
+                  mt={1}
+                  display={'inline-block'}
+                  borderRadius={'xs'}
+                  cursor={'pointer'}
+                  onClick={() => onclickSave()}
+                  color={'myGray.500'}
+                >
+                  {saveLabel}
+                </Box>
+              </MyTooltip>
+            )}
           </Box>
 
           <Box flex={1} />
 
-          <MyMenu
-            Button={
+          {!isShowVersionHistories && (
+            <>
+              <MyMenu
+                Button={
+                  <IconButton
+                    mr={[2, 4]}
+                    icon={<MyIcon name={'more'} w={'14px'} p={2} />}
+                    aria-label={''}
+                    size={'sm'}
+                    variant={'whitePrimary'}
+                  />
+                }
+                menuList={[
+                  {
+                    label: appT('Import Configs'),
+                    icon: 'common/importLight',
+                    onClick: onOpenImport
+                  },
+                  {
+                    label: appT('Export Configs'),
+                    icon: 'export',
+                    onClick: onExportWorkflow
+                  }
+                ]}
+              />
+
               <IconButton
-                mr={[3, 5]}
-                icon={<MyIcon name={'more'} w={'14px'} p={2} />}
+                mr={[2, 4]}
+                icon={<MyIcon name={'history'} w={'18px'} />}
                 aria-label={''}
                 size={'sm'}
+                w={'30px'}
                 variant={'whitePrimary'}
+                onClick={() => setIsShowVersionHistories(true)}
               />
-            }
-            menuList={[
-              {
-                label: t('app.Import Configs'),
-                icon: 'common/importLight',
-                onClick: onOpenImport
-              },
-              {
-                label: t('app.Export Configs'),
-                icon: 'export',
-                onClick: onExportWorkflow
-              }
-            ]}
-          />
+            </>
+          )}
 
           <Button
-            mr={[3, 5]}
             size={'sm'}
-            leftIcon={<MyIcon name={'core/chat/chatLight'} w={['14px', '16px']} />}
+            leftIcon={<MyIcon name={'core/workflow/debug'} w={['14px', '16px']} />}
             variant={'whitePrimary'}
             onClick={async () => {
               const data = await flowData2StoreDataAndCheck();
@@ -250,42 +292,50 @@ const RenderHeaderContainer = React.memo(function RenderHeaderContainer({
               }
             }}
           >
-            {t('core.Chat test')}
+            {t('core.workflow.Debug')}
           </Button>
 
-          <Button
-            size={'sm'}
-            isLoading={isSaving}
-            leftIcon={<MyIcon name={'common/publishFill'} w={['14px', '16px']} />}
-            onClick={openConfigPublish(onclickPublish)}
-          >
-            {t('core.app.Publish')}
-          </Button>
+          {!isShowVersionHistories && (
+            <Button
+              ml={[2, 4]}
+              size={'sm'}
+              isLoading={isSaving}
+              leftIcon={<MyIcon name={'common/publishFill'} w={['14px', '16px']} />}
+              onClick={openConfigPublish(onclickPublish)}
+            >
+              {t('core.app.Publish')}
+            </Button>
+          )}
         </Flex>
         <ConfirmModal confirmText={t('core.app.Publish')} />
       </>
     );
   }, [
-    ConfirmModal,
-    app.name,
-    flowData2StoreDataAndCheck,
+    theme.borders.base,
     isSaving,
-    onExportWorkflow,
-    onOpenImport,
-    onclickPublish,
-    onclickSave,
-    openConfigPublish,
     saveAndBack,
-    saveLabel,
-    setWorkflowTestData,
+    app.name,
+    isShowVersionHistories,
+    isV2Workflow,
     t,
-    theme.borders.base
+    saveLabel,
+    appT,
+    onOpenImport,
+    onExportWorkflow,
+    openConfigPublish,
+    onclickPublish,
+    ConfirmModal,
+    onclickSave,
+    setIsShowVersionHistories,
+    flowData2StoreDataAndCheck,
+    setWorkflowTestData
   ]);
 
   return (
     <>
       {Render}
       {isOpenImport && <ImportSettings onClose={onCloseImport} />}
+      {isShowVersionHistories && <PublishHistories />}
     </>
   );
 });
@@ -298,6 +348,11 @@ const Header = (props: Props) => {
     nodes: StoreNodeItemType[];
     edges: StoreEdgeItemType[];
   }>();
+  const { isOpen: isOpenTest, onOpen: onOpenTest, onClose: onCloseTest } = useDisclosure();
+
+  useUpdateEffect(() => {
+    onOpenTest();
+  }, [workflowTestData]);
 
   return (
     <>
@@ -308,9 +363,10 @@ const Header = (props: Props) => {
       />
       <ChatTest
         ref={ChatTestRef}
+        isOpen={isOpenTest}
         {...workflowTestData}
         app={app}
-        onClose={() => setWorkflowTestData(undefined)}
+        onClose={onCloseTest}
       />
     </>
   );
