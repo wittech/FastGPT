@@ -18,7 +18,7 @@ export async function text2Speech({
   voice: string;
   speed?: number;
 }) {
-  const ai = getAIApi({ userKey: {key: process.env.OPENAI_TTS_KEY, baseUrl: process.env.OPENAI_TTS_URL} });
+  const ai = getAIApi({ userKey: {key: process.env.OPENAI_TTS_KEY || '', baseUrl: process.env.OPENAI_TTS_URL || ''} });
   const response = await ai.audio.speech.create({
     model,
     // @ts-ignore
