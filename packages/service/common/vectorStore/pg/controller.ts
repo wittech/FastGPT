@@ -98,11 +98,14 @@ export const deleteDatasetDataVector = async (
       return `${teamIdWhere} ${datasetIdWhere}`;
     }
 
-    if ('idList' in props && props.idList) {
+    if ('idList' in props && Array.isArray(props.idList)) {
+      if (props.idList.length === 0) return;
       return `${teamIdWhere} id IN (${props.idList.map((id) => `'${String(id)}'`).join(',')})`;
     }
     return Promise.reject('deleteDatasetData: no where');
   })();
+
+  if (!where) return;
 
   try {
     await PgClient.delete(PgDatasetTableName, {
@@ -129,17 +132,19 @@ export const embeddingRecall = async (
 ): Promise<{
   results: EmbeddingRecallItemType[];
 }> => {
-  const { datasetIds, vectors, limit, retry = 2 } = props;
+  const { teamId, datasetIds, vectors, limit, retry = 2 } = props;
 
   try {
     const results: any = await PgClient.query(
-      `BEGIN;
+      `
+      BEGIN;
         SET LOCAL hnsw.ef_search = ${global.systemEnv?.pgHNSWEfSearch || 100};
         select id, collection_id, vector <#> '[${vectors[0]}]' AS score 
           from ${PgDatasetTableName} 
-          where dataset_id IN (${datasetIds.map((id) => `'${String(id)}'`).join(',')})
+          where team_id='${teamId}'
+            AND dataset_id IN (${datasetIds.map((id) => `'${String(id)}'`).join(',')})
           order by score limit ${limit};
-        COMMIT;`
+      COMMIT;`
     );
 
     const rows = results?.[2]?.rows as PgSearchRawType[];
