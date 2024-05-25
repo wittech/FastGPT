@@ -83,6 +83,8 @@ services:
       - DEFAULT_ROOT_PSW=HGOP9589dfet
       # AI模型的API地址哦。务必加 /v1。这里默认填写了OneApi的访问地址。
       - OPENAI_BASE_URL=http://host.docker.internal:6000/v1
+      - OPENAI_TTS_KEY=sk-1cRt2AqUhCfR1hVY70A7012fE0Ec4bCa8a4bB6B179Ee1cDc
+      - OPENAI_TTS_URL=
       # AI模型的API Key。（这里默认填写了OneAPI的快速默认key，测试通后，务必及时修改）
       - CHAT_API_KEY=sk-1cRt2AqUhCfR1hVY70A7012fE0Ec4bCa8a4bB6B179Ee1cDc
       # 数据库最大连接数
