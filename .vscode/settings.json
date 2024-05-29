@@ -1,6 +1,6 @@
 {
     "editor.formatOnSave": true,
-    "editor.mouseWheelZoom": true,
+    "editor.mouseWheelZoom": false,
     "typescript.tsdk": "node_modules/typescript/lib",
     "prettier.prettierPath": "",
     "i18n-ally.localesPaths": [

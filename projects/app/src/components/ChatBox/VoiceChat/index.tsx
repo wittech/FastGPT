@@ -152,6 +152,7 @@ const VoiceChat = ({ onSendMessage, onClose }: any) => {
    * 处理显示状态
    */
   useEffect(() => {
+    if (!loaded) return;
     if (isChatting) {
       setGifState(GIF_STATE.THINKING);
       setRecordingDisabled(true);
@@ -199,12 +200,11 @@ const VoiceChat = ({ onSendMessage, onClose }: any) => {
       />
       {!loaded && <span className={styles.connecting}>连接中...</span>}
       {recordingDisabled ? (
-        <button style={{ userSelect: 'none' }} key="1" className={styles['record-button-disabled']}>
+        <button key="1" className={styles['record-button-disabled']}>
           按住
         </button>
       ) : (
         <button
-          style={{ userSelect: 'none' }}
           key="2"
           className={styles['record-button']}
           onTouchStart={startRecording}

@@ -543,6 +543,10 @@ const ChatInput = ({
           transform={'translateY(-50%)'}
           onClick={onVoiceChat}
         >
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"
+          />
           <MyIcon
             name={'core/app/ttsFill'}
             width={['25px', '28px']}
