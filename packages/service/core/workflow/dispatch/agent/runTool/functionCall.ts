@@ -161,6 +161,7 @@ export const runToolWithFunctionCall = async (
 
         const toolRunResponse = await dispatchWorkFlow({
           ...props,
+          isToolCall: true,
           runtimeNodes: runtimeNodes.map((item) =>
             item.nodeId === toolNode.nodeId
               ? {
@@ -384,7 +385,10 @@ async function streamResponse({
             });
           }
         }
+
+        continue;
       }
+
       /* arg 插入最后一个工具的参数里 */
       const arg: string = functionCall?.arguments || '';
       const currentTool = functionCalls[functionCalls.length - 1];

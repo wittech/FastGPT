@@ -1,16 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { jsonRes } from '@fastgpt/service/common/response';
-import { connectToDatabase } from '@/service/mongo';
 import { MongoApp } from '@fastgpt/service/core/app/schema';
 import type { AppUpdateParams } from '@/global/core/app/api';
 import { authApp } from '@fastgpt/service/support/permission/auth/app';
-import { getScheduleTriggerApp } from '@/service/core/app/utils';
 import { beforeUpdateAppFormat } from '@fastgpt/service/core/app/controller';
-import { NextAPI } from '@/service/middle/entry';
+import { NextAPI } from '@/service/middleware/entry';
 
 /* 获取我的模型 */
 async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
-  const { name, avatar, type, intro, nodes, edges, permission, teamTags } =
+  const { name, avatar, type, intro, nodes, edges, chatConfig, permission, teamTags } =
     req.body as AppUpdateParams;
   const { appId } = req.query as { appId: string };
 
@@ -36,14 +33,14 @@ async function handler(req: NextApiRequest, res: NextApiResponse<any>) {
       avatar,
       intro,
       permission,
-      version: 'v2',
       ...(teamTags && teamTags),
       ...(formatNodes && {
         modules: formatNodes
       }),
       ...(edges && {
         edges
-      })
+      }),
+      ...(chatConfig && { chatConfig })
     }
   );
 }

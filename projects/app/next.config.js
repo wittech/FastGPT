@@ -36,6 +36,10 @@ const nextConfig = {
       unknownContextCritical: false
     };
 
+    if (!config.externals) {
+      config.externals = [];
+    }
+
     if (isServer) {
       config.externals.push('worker_threads');
 
@@ -51,11 +55,15 @@ const nextConfig = {
               ...entries,
               'worker/htmlStr2Md': path.resolve(
                 process.cwd(),
-                '../../packages/service/worker/htmlStr2Md.ts'
+                '../../packages/service/worker/htmlStr2Md/index.ts'
               ),
               'worker/countGptMessagesTokens': path.resolve(
                 process.cwd(),
                 '../../packages/service/worker/tiktoken/countGptMessagesTokens.ts'
+              ),
+              'worker/readFile': path.resolve(
+                process.cwd(),
+                '../../packages/service/worker/file/read.ts'
               )
             };
           }
@@ -69,19 +77,19 @@ const nextConfig = {
           fs: false
         }
       };
-      if (!config.externals) {
-        config.externals = [];
-      }
     }
+
+    config.experiments = {
+      asyncWebAssembly: true,
+      layers: true
+    };
 
     return config;
   },
   transpilePackages: ['@fastgpt/*', 'ahooks'],
   experimental: {
-    // 外部包独立打包
+    // 优化 Server Components 的构建和运行，避免不必要的客户端打包。
     serverComponentsExternalPackages: ['mongoose', 'pg'],
-    // 指定导出包优化，按需引入包模块
-    optimizePackageImports: ['mongoose', 'pg'],
     outputFileTracingRoot: path.join(__dirname, '../../')
   }
 };

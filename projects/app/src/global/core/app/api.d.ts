@@ -16,6 +16,7 @@ export type AppUpdateParams = {
   intro?: string;
   nodes?: AppSchema['modules'];
   edges?: AppSchema['edges'];
+  chatConfig?: AppSchema['chatConfig'];
   permission?: AppSchema['permission'];
   teamTags?: AppSchema['teamTags'];
 };
@@ -24,4 +25,12 @@ export type PostPublishAppProps = {
   type: `${AppTypeEnum}`;
   nodes: AppSchema['modules'];
   edges: AppSchema['edges'];
+  chatConfig: AppSchema['chatConfig'];
+};
+
+export type PostRevertAppProps = {
+  versionId: string;
+  // edit workflow
+  editNodes: AppSchema['modules'];
+  editEdges: AppSchema['edges'];
 };

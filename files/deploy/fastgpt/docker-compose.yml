@@ -1,6 +1,7 @@
 # 数据库的默认账号和密码仅首次运行时设置有效
 # 如果修改了账号密码，记得改数据库和项目连接参数，别只改一处~
 # 该配置文件只是给快速启动，测试使用。正式使用，记得务必修改账号密码，以及调整合适的知识库参数，共享内存等。
+# 如何无法访问 dockerhub 和 git，可以用阿里云（阿里云没有arm包）
 
 version: '3.3'
 services:
@@ -82,6 +83,8 @@ services:
       - DEFAULT_ROOT_PSW=HGOP9589dfet
       # AI模型的API地址哦。务必加 /v1。这里默认填写了OneApi的访问地址。
       - OPENAI_BASE_URL=http://host.docker.internal:6000/v1
+      - OPENAI_TTS_KEY=sk-1cRt2AqUhCfR1hVY70A7012fE0Ec4bCa8a4bB6B179Ee1cDc
+      - OPENAI_TTS_URL=
       # AI模型的API Key。（这里默认填写了OneAPI的快速默认key，测试通后，务必及时修改）
       - CHAT_API_KEY=sk-1cRt2AqUhCfR1hVY70A7012fE0Ec4bCa8a4bB6B179Ee1cDc
       # 数据库最大连接数
