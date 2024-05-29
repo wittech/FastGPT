@@ -28,6 +28,14 @@ const VoiceChat = ({ onSendMessage, onClose }: any) => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    const fn = (e: any) => e.preventDefault();
+    addEventListener('contextmenu', fn);
+    return () => {
+      removeEventListener('contextmenu', fn);
+    };
+  }, []);
+
+  useEffect(() => {
     rec = Recorder({
       type: 'wav',
       bitRate: 16,
@@ -172,7 +180,13 @@ const VoiceChat = ({ onSendMessage, onClose }: any) => {
       style={{
         backgroundImage: `url(${gifs[gifState]})`,
         backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat'
+        backgroundRepeat: 'no-repeat',
+        position: 'absolute',
+        zIndex: 10,
+        left: 0,
+        top: 0,
+        width: '100%',
+        height: '100%'
       }}
     >
       <MyIcon
@@ -185,11 +199,12 @@ const VoiceChat = ({ onSendMessage, onClose }: any) => {
       />
       {!loaded && <span className={styles.connecting}>连接中...</span>}
       {recordingDisabled ? (
-        <button key="1" className={styles['record-button-disabled']}>
+        <button style={{ userSelect: 'none' }} key="1" className={styles['record-button-disabled']}>
           按住
         </button>
       ) : (
         <button
+          style={{ userSelect: 'none' }}
           key="2"
           className={styles['record-button']}
           onTouchStart={startRecording}
