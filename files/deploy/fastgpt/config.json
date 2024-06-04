@@ -408,6 +408,37 @@
   ],
   "audioSpeechModels": [
     {
+      "model": "ChatTTS",
+      "name": "ChatTTS",
+      "charsPointsPrice": 0,
+      "voices": [
+        {
+          "label": "男(11)",
+          "value": "11",
+        },
+        {
+          "label": "男(12)",
+          "value": "12",
+        },
+        {
+          "label": "男(16)",
+          "value": "16",
+        },
+        {
+          "label": "女(5)",
+          "value": "5",
+        },
+        {
+          "label": "女(13)",
+          "value": "13",
+        },
+        {
+          "label": "女(14)",
+          "value": "14",
+        },
+      ]
+    },
+    {
       "model": "tts-1",
       "name": "OpenAI TTS1",
       "charsPointsPrice": 0,
