@@ -218,6 +218,8 @@ const ChatInput = ({
     startSpeak(finishWhisperTranscription);
   }, [finishWhisperTranscription, isSpeaking, startSpeak, stopSpeak]);
 
+  const isIphone = /iPhone/i.test(navigator.userAgent);
+
   return (
     <Box
       m={['0 auto', '10px auto']}
@@ -241,7 +243,7 @@ const ChatInput = ({
             }
           : {
               borderRadius: '10px',
-              margin: '0 50px 10px 10px'
+              margin: isIphone ? '0 10px 10px 10px' : '0 50px 10px 10px'
             })}
       >
         {/* Chat input guide box */}
@@ -535,7 +537,7 @@ const ChatInput = ({
           </Flex>
         </Flex>
       </Box>
-      {!isPc && (
+      {!isPc && !isIphone && (
         <Box
           position="absolute"
           right={'10px'}
