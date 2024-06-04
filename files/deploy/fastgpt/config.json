@@ -403,7 +403,7 @@
     {
       "model": "bge-reranker-v2-m3",
       "name": "BgeReranker-v2-m3",
-      "charsPointsPrice": 0,
+      "charsPointsPrice": 0
     }
   ],
   "audioSpeechModels": [
