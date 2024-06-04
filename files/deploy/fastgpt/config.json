@@ -401,9 +401,9 @@
   ],
   "reRankModels": [
     {
-      "model": "bge-reranker-large",
-      "name": "检索重排-large",
-      "charsPointsPrice": 0
+      "model": "bge-reranker-v2-m3",
+      "name": "BgeReranker-v2-m3",
+      "charsPointsPrice": 0,
     }
   ],
   "audioSpeechModels": [
