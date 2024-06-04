@@ -20,7 +20,7 @@ export async function getVectorsByText({ model, input, type }: GetVectorProps) {
   }
 
   try {
-    const ai = getAIApi();
+    const ai = getAIApi({ userKey: {key: process.env.OPENAI_TTS_KEY || '', baseUrl: process.env.OPENAI_TTS_URL || ''} });
 
     // input text to vector
     const result = await ai.embeddings
