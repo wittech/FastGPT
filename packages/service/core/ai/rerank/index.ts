@@ -18,14 +18,14 @@ export function reRankRecall({
   documents: { id: string; text: string }[];
 }): Promise<ReRankCallResult> {
   const model = global.reRankModels[0];
-
-  if (!model || !model?.requestUrl) {
+  
+  if (!model) {
     return Promise.reject('no rerank model');
   }
-
+  const url = `${process.env.OPENAI_TTS_URL}/rerank`;
   let start = Date.now();
   return POST<PostReRankResponse>(
-    model.requestUrl,
+    url,
     {
       model: model.model,
       query,
@@ -33,7 +33,7 @@ export function reRankRecall({
     },
     {
       headers: {
-        Authorization: `Bearer ${model.requestAuth}`
+        Authorization: `Bearer ${process.env.OPENAI_TTS_KEY}`
       },
       timeout: 30000
     }
