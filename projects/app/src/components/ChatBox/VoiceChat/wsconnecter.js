@@ -14,7 +14,7 @@ export default function WebSocketConnectMethod(config) {
   var stateHandle = config.stateHandle;
 
   this.wsStart = function () {
-    var Uri = "wss://www.funasr.com:10096/";
+    var Uri = "wss://asr.cqhyw.cn";
 
     if ("WebSocket" in window) {
       speechSokt = new WebSocket(Uri); // 定义socket连接对象
