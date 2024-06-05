@@ -414,28 +414,28 @@
       "voices": [
         {
           "label": "男(11)",
-          "value": "11",
+          "value": "11"
         },
         {
           "label": "男(12)",
-          "value": "12",
+          "value": "12"
         },
         {
           "label": "男(16)",
-          "value": "16",
+          "value": "16"
         },
         {
           "label": "女(5)",
-          "value": "5",
+          "value": "5"
         },
         {
           "label": "女(13)",
-          "value": "13",
+          "value": "13"
         },
         {
           "label": "女(14)",
-          "value": "14",
-        },
+          "value": "14"
+        }
       ]
     },
     {
