@@ -14,15 +14,15 @@ export default function WebSocketConnectMethod(config) {
   var stateHandle = config.stateHandle;
 
   this.wsStart = function () {
-    var Uri = "wss://asr.cqhyw.cn";
+    var Uri = 'wss://asr.cqhyw.cn/ws';
 
-    if ("WebSocket" in window) {
+    if ('WebSocket' in window) {
       speechSokt = new WebSocket(Uri); // 定义socket连接对象
       speechSokt.onopen = function (e) {
         onOpen(e);
       }; // 定义响应函数
       speechSokt.onclose = function (e) {
-        console.log("onclose ws!");
+        console.log('onclose ws!');
         //speechSokt.close();
         onClose(e);
       };
@@ -34,7 +34,7 @@ export default function WebSocketConnectMethod(config) {
       };
       return 1;
     } else {
-      alert("当前浏览器不支持 WebSocket");
+      alert('当前浏览器不支持 WebSocket');
       return 0;
     }
   };
@@ -42,7 +42,7 @@ export default function WebSocketConnectMethod(config) {
   // 定义停止与发送函数
   this.wsStop = function () {
     if (speechSokt != undefined) {
-      console.log("stop ws!");
+      console.log('stop ws!');
       speechSokt.close();
     }
   };
@@ -62,16 +62,16 @@ export default function WebSocketConnectMethod(config) {
     var chunk_size = new Array(5, 10, 5);
     var request = {
       chunk_size: chunk_size,
-      wav_name: "h5",
+      wav_name: 'h5',
       is_speaking: true,
       chunk_interval: 10,
       itn: false,
-      mode: "2pass",
+      mode: '2pass'
     };
 
     console.log(JSON.stringify(request));
     speechSokt.send(JSON.stringify(request));
-    console.log("连接成功");
+    console.log('连接成功');
     stateHandle(0);
   }
 
